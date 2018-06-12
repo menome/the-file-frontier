@@ -1,0 +1,28 @@
+{
+  "neo4j": {
+    "enable": true,
+    "url": "bolt://localhost",
+    "user": "neo4j",
+    "pass": "graphPaper!"
+  },
+  "rabbit": {
+    "enable": true,
+    "url": "amqp://rabbitmq:rabbitmq@localhost:5672?heartbeat=3600",
+    "routingKey": "syncevents.crawler",
+    "exchange": "syncevents",
+    "exchangeType": "topic"
+  },
+  "rabbit_outgoing": {
+    "enable": true,
+    "url": "amqp://rabbitmq:rabbitmq@rabbit:5672?heartbeat=3600",
+    "routingKey": "fanExchange.added",
+    "exchange": "fanExchange",
+    "exchangeType": "topic"
+  },
+  "librarian": {
+    "enable": true,
+    "host": "http://10.2.200.156:8000/webfolders",
+    "username": "kaust",
+    "password": "n00dl3c0rn"
+  }
+}
