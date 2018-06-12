@@ -5,12 +5,12 @@ const librarian = require('./librarian');
 const fs = require('fs');
 const mime = require('mime-types');
 const crypto = require('crypto');
-const path = require('path');
 const exec = require('child_process').execFileSync;
 
 
 module.exports = function(bot) {
   // First ingestion point.
+  // TODO: Detect and translate S3/Minio messages into internal messages.
   this.handleMessage = function(msg) {
     bot.logger.info(JSON.stringify(msg))
 
@@ -30,8 +30,7 @@ module.exports = function(bot) {
           CrawlDateTime: msg.Timestamp,
           MimeType: mimeFromData || mimeFromName || 'application/octet-stream',
           Size: fs.statSync(tmpPath).size,
-          Name: msg.Path,
-          Extension: msg.Path.basename
+          Name: msg.Path
         }
       }
 
