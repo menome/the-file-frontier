@@ -38,7 +38,18 @@ module.exports = function(bot) {
       return getChecksum(tmpPath).then((sum) => {
         fileObj.SHA256 = sum;
         var query = queryBuilder.addFile(fileObj, workingUuid);
-        return bot.neo4j.query(query.compile(), query.params());
+        return bot.neo4j.query(query.compile(), query.params()).then((result) => {
+          if(fs.existsSync(tmpPath)) {
+            fs.unlinkSync(tmpPath); // Delete our temp file.
+          }
+          return result;
+        })
+      }).catch((err) => {
+        if(fs.existsSync(tmpPath)) {
+          fs.unlinkSync(tmpPath); // Delete our temp file.
+        }
+
+        throw err; // And pass the exception up
       })
 
     }).catch((err) => {
@@ -67,10 +78,11 @@ module.exports = function(bot) {
 
     try {
       var stdout = exec('file', args);
+      stdout = stdout.toString();
       return stdout.substring(stdout.lastIndexOf(' ')).trim();
     }
     catch(err) {
-      console.log(err);
+      bot.logger.error(err)
       return null;
     }
   }

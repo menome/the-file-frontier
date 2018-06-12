@@ -21,8 +21,8 @@
   },
   "librarian": {
     "enable": true,
-    "host": "http://10.2.200.156:8000/webfolders",
-    "username": "kaust",
-    "password": "n00dl3c0rn"
+    "host": "http://localhost:3020",
+    "username": "botuser",
+    "password": "UzTSy9zp46kKhTT6"
   }
 }
