@@ -33,16 +33,20 @@ module.exports = function(bot) {
       handlerFunc = handleBotMessage;
     } 
 
-    return handlerFunc(msg).then(() => {
+    return handlerFunc(msg).then((uuid) => {
       bot.logger.info("Processed file:", msg.Path)
-      outQueue.publishMessage(msg);
+      outQueue.publishMessage({
+        "Library": msg.Library,
+        "Path": msg.Path,
+        "Timestamp": msg.Timestamp,
+        "Uuid": uuid // The actual UUID.
+      });
     }).catch((err) => {
       bot.logger.error(err.toString());
     });
   }
 
-  
-  // Parses a bot message.
+  // Parses a bot message. Returns a promise that resolves with the created graph node's UUID.
   function handleBotMessage(msg) {
     // This is not necessarily the UUID in our graph. Be careful.
     var workingUuid = uuid();
@@ -68,10 +72,11 @@ module.exports = function(bot) {
         fileObj.SHA256 = sum;
         var query = queryBuilder.addFile(fileObj, workingUuid);
         return bot.neo4j.query(query.compile(), query.params()).then((result) => {
+          var uuid = result.records[0].get("uuid");
           if(fs.existsSync(tmpPath)) {
             fs.unlinkSync(tmpPath); // Delete our temp file.
           }
-          return result;
+          return uuid;
         })
       }).catch((err) => {
         if(fs.existsSync(tmpPath)) {
