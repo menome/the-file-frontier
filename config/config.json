@@ -14,9 +14,9 @@
   },
   "rabbit_outgoing": {
     "enable": true,
-    "url": "amqp://rabbitmq:rabbitmq@rabbit:5672?heartbeat=3600",
-    "routingKey": "fanExchange.added",
-    "exchange": "fanExchange",
+    "url": "amqp://rabbitmq:rabbitmq@localhost:5672?heartbeat=3600",
+    "routingKey": "fpp.added",
+    "exchange": "fpp",
     "exchangeType": "topic"
   },
   "librarian": {

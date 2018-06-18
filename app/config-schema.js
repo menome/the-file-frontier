@@ -43,38 +43,38 @@ module.exports = {
       default: 'filestore'
     }
   },
-  librarian: {
-    enable: {
-      doc: "Whether we're using the file librarian.",
-      format: "Boolean",
-      default: false,
-      env: "LIBRARIAN_ENABLE"
-    },
-    host: {
-      doc: "URL of the File Librarian",
-      format: "String",
-      default: "localhost:3020",
-      env: "LIBRARIAN_HOST"
-    },
-    secret: {
-      doc: "Secret for signing JWT to be carried to the File Librarian",
-      format: "String",
-      default: "nice web mister crack spider",
-      env: "LIBRARIAN_SECRET",
-      sensitive: true
-    },
-    username: {
-      doc: "Username for Librarian access",
-      format: "String",
-      default: "admin",
-      env: "LIBRARIAN_USERNAME"
-    },
-    password: {
-      doc: "Password for Librarian access",
-      format: "String",
-      default: "password",
-      env: "LIBRARIAN_PASSWORD",
-      sensitive: true
-    }
-  }
+  // librarian: {
+  //   enable: {
+  //     doc: "Whether we're using the file librarian.",
+  //     format: "Boolean",
+  //     default: false,
+  //     env: "LIBRARIAN_ENABLE"
+  //   },
+  //   host: {
+  //     doc: "URL of the File Librarian",
+  //     format: "String",
+  //     default: "localhost:3020",
+  //     env: "LIBRARIAN_HOST"
+  //   },
+  //   secret: {
+  //     doc: "Secret for signing JWT to be carried to the File Librarian",
+  //     format: "String",
+  //     default: "nice web mister crack spider",
+  //     env: "LIBRARIAN_SECRET",
+  //     sensitive: true
+  //   },
+  //   username: {
+  //     doc: "Username for Librarian access",
+  //     format: "String",
+  //     default: "admin",
+  //     env: "LIBRARIAN_USERNAME"
+  //   },
+  //   password: {
+  //     doc: "Password for Librarian access",
+  //     format: "String",
+  //     default: "password",
+  //     env: "LIBRARIAN_PASSWORD",
+  //     sensitive: true
+  //   }
+  // }
 };
