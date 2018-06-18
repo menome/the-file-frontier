@@ -33,13 +33,14 @@ module.exports = function(bot) {
       handlerFunc = handleBotMessage;
     } 
 
-    return handlerFunc(msg).then((uuid) => {
+    return handlerFunc(msg).then((res) => {
       bot.logger.info("Processed file:", msg.Path)
       outQueue.publishMessage({
         "Library": msg.Library,
         "Path": msg.Path,
         "Timestamp": msg.Timestamp,
-        "Uuid": uuid // The actual UUID.
+        "Uuid": res.uuid, // The actual UUID.
+        "Mime": res.mime // File's MIME type.
       });
     }).catch((err) => {
       bot.logger.error(err.toString());
@@ -73,10 +74,11 @@ module.exports = function(bot) {
         var query = queryBuilder.addFile(fileObj, workingUuid);
         return bot.neo4j.query(query.compile(), query.params()).then((result) => {
           var uuid = result.records[0].get("uuid");
+          var mime = result.records[0].get("mime");
           if(fs.existsSync(tmpPath)) {
             fs.unlinkSync(tmpPath); // Delete our temp file.
           }
-          return uuid;
+          return {uuid, mime};
         })
       }).catch((err) => {
         if(fs.existsSync(tmpPath)) {
