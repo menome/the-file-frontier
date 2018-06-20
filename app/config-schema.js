@@ -37,5 +37,15 @@ module.exports = {
       default: 5,
       env: "RABBIT_OUTGOING_PREFETCH" 
     }
+  },
+  downstream_actions: { // Tells us where to put stuff based on 
+    doc: "Key/value pairs. keys are string-type result codes. Values are the next routing key to push the message to, or false to end the processing.",
+    default: { success: false, error: false},
+    format: function check(routing) {
+      Object.keys(routing).forEach((key) => {
+        if(typeof routing[key] !== 'string' && routing[key] !== false)
+          throw new Error("Routing keys must be strings, or 'false'.")
+      })
+    }
   }
 };

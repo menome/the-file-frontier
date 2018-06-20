@@ -1,13 +1,13 @@
 "use strict";
 const uuid = require('uuid/v4');
 const queryBuilder = require('./queryBuilder');
-// const librarian = require('./librarian');
 const fs = require('fs');
 const mime = require('mime-types');
 const crypto = require('crypto');
 const exec = require('child_process').execFileSync;
 const RabbitClient = require('@menome/botframework/rabbitmq');
 const botSchema = require("@menome/botframework/helpers/schema");
+const helpers = require('./helpers');
 
 module.exports = function(bot) {
   var outQueue = new RabbitClient(bot.config.get('rabbit_outgoing'));
@@ -31,17 +31,26 @@ module.exports = function(bot) {
 
       msg = newMsg;
       handlerFunc = handleBotMessage;
-    } 
+    }
 
     return handlerFunc(msg).then((res) => {
+      // Make the message and decide where it should go next.
       bot.logger.info("Processed file:", msg.Path)
-      outQueue.publishMessage({
+      var outMsg = {
         "Library": msg.Library,
         "Path": msg.Path,
         "Timestamp": msg.Timestamp,
         "Uuid": res.uuid, // The actual UUID.
         "Mime": res.mime // File's MIME type.
-      });
+      };
+
+      var downstream_actions = bot.config.get('downstream_actions');
+      var newRoutingKey = downstream_actions[res.mime];
+
+      bot.logger.info("Next routing key is '%s'", newRoutingKey)
+
+      if(newRoutingKey === false || newRoutingKey === undefined) return;
+      return outQueue.publishMessage(outMsg, "fileProcessingMessage");
     }).catch((err) => {
       bot.logger.error(err.toString());
     });
@@ -75,16 +84,11 @@ module.exports = function(bot) {
         return bot.neo4j.query(query.compile(), query.params()).then((result) => {
           var uuid = result.records[0].get("uuid");
           var mime = result.records[0].get("mime");
-          if(fs.existsSync(tmpPath)) {
-            fs.unlinkSync(tmpPath); // Delete our temp file.
-          }
+          helpers.deleteFile(tmpPath);
           return {uuid, mime};
         })
       }).catch((err) => {
-        if(fs.existsSync(tmpPath)) {
-          fs.unlinkSync(tmpPath); // Delete our temp file.
-        }
-
+        helpers.deleteFile(tmpPath);
         throw err; // And pass the exception up
       })
     })

@@ -13,7 +13,6 @@
     "exchangeType": "topic"
   },
   "rabbit_outgoing": {
-    "enable": true,
     "url": "amqp://rabbitmq:rabbitmq@localhost:5672?heartbeat=3600",
     "routingKey": "fpp.added",
     "exchange": "fpp",
@@ -24,5 +23,9 @@
     "host": "http://localhost:3020",
     "username": "botuser",
     "password": "UzTSy9zp46kKhTT6"
+  },
+  "downstream_actions": {
+    "application/pdf": "fpp.fulltext",
+    "error": false
   }
 }
