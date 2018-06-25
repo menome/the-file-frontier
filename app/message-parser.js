@@ -20,12 +20,16 @@ module.exports = function(bot) {
     // If it conforms to the bot message schema, we know how to handle it.
     if(!botSchema.validate(botSchema.schemas.crawlerMessage, msg)) {
       handlerFunc = handleBotMessage;
-    }
-    else if(!!msg.EventType && msg.EventType.startsWith("s3:")) {// Minio/S3 type event. Convert to bot message.
+    } else if(!!msg.EventName && msg.EventName.startsWith("s3:")) {// Minio/S3 type event. Convert to bot message.
+
+      var eventtype = "CREATE";
+      if(msg.EventName.match(/ObjectRemoved/))
+        eventtype = "DELETE";
+
       var newMsg = {
         "Library": "miniofiles", //TODO: This should not be hard-coded. Bad times.
         "Path": msg.Key,
-        "EventType": "CREATE", // TODO: Parse event types.
+        "EventType": eventtype,
         "Timestamp": msg.time
       }
 
@@ -34,6 +38,7 @@ module.exports = function(bot) {
     }
 
     return handlerFunc(msg).then((res) => {
+      if(res.action === "deleted") return bot.logger.info("Deleted file from graph.");
       // Make the message and decide where it should go next.
       bot.logger.info("Processed file:", msg.Path)
       var outMsg = {
@@ -47,10 +52,13 @@ module.exports = function(bot) {
       var downstream_actions = bot.config.get('downstream_actions');
       var newRoutingKey = downstream_actions[res.mime];
 
+      if(newRoutingKey === false || newRoutingKey === undefined) {
+        return bot.logger.info("No next routing key.");
+      }
+
       bot.logger.info("Next routing key is '%s'", newRoutingKey)
 
-      if(newRoutingKey === false || newRoutingKey === undefined) return;
-      return outQueue.publishMessage(outMsg, "fileProcessingMessage");
+      return outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: newRoutingKey});
     }).catch((err) => {
       bot.logger.error(err.toString());
     });
@@ -60,6 +68,12 @@ module.exports = function(bot) {
   function handleBotMessage(msg) {
     // This is not necessarily the UUID in our graph. Be careful.
     var workingUuid = uuid();
+
+    // Handle deletes separately.
+    if(msg.EventType === "DELETE") {
+      var query = queryBuilder.deleteFile(msg.Library, msg.Path);
+      return bot.neo4j.query(query.compile(), query.params()).then(() => { return {action: "deleted"}; })
+    }
 
     // Get the message.
     // var libr = new librarian(bot);

@@ -18,6 +18,18 @@ module.exports.addFile = function(file, newUuid) {
 }
 
 /**
+ * Deletes a file from the graph.
+ * Don't match on UUID because we might not have UUID yet.
+ */
+module.exports.deleteFile = function(libraryKey, libraryPath) {
+  var query = new Query();
+  query.match("(f:File:Card)");
+  query.where("f.LibraryKey = $lkey AND f.LibraryPath = $lpath", {lkey: libraryKey, lpath: libraryPath})
+  query.add("DETACH DELETE f");
+  return query;
+}
+
+/**
  * Takes an object with article data
  *  Return cql query that builds the object
  * Doesn't link it to anything
