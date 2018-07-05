@@ -31,7 +31,7 @@ module.exports.deleteFile = function(libraryKey, libraryPath) {
 
 /**
  * Takes an object with article data
- *  Return cql query that builds the object
+ * Return cql query that builds the object
  * Doesn't link it to anything
  */
 module.exports.addArticleQuery = function(articleObj, newUuid) {

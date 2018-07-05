@@ -20,10 +20,10 @@ module.exports = function(bot) {
     // If it conforms to the bot message schema, we know how to handle it.
     if(!botSchema.validate(botSchema.schemas.crawlerMessage, msg)) {
       handlerFunc = handleBotMessage;
-    } else if(!!msg.EventType && msg.EventType.startsWith("s3:")) {// Minio/S3 type event. Convert to bot message.
+    } else if(!!msg.EventName && msg.EventName.startsWith("s3:")) {// Minio/S3 type event. Convert to bot message.
 
       var eventtype = "CREATE";
-      if(msg.EventType.match(/ObjectRemoved/))
+      if(msg.EventName.match(/ObjectRemoved/))
         eventtype = "DELETE";
 
       var newMsg = {
@@ -60,7 +60,7 @@ module.exports = function(bot) {
 
       return outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: newRoutingKey});
     }).catch((err) => {
-      bot.logger.error(err.toString());
+      bot.logger.error(err.toString(), err.stack);
     });
   }
 
