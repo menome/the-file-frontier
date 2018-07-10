@@ -43,7 +43,7 @@ module.exports = {
     default: { success: false, error: false},
     format: function check(routing) {
       Object.keys(routing).forEach((key) => {
-        if(typeof routing[key] !== 'string' && routing[key] !== false)
+        if(typeof routing[key] !== 'string' && routing[key] !== false && !Array.isArray(routing[key]))
           throw new Error("Routing keys must be strings, or 'false'.")
       })
     }

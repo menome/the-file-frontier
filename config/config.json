@@ -25,7 +25,7 @@
     "password": "UzTSy9zp46kKhTT6"
   },
   "downstream_actions": {
-    "application/pdf": "fpp.fulltext",
+    "application/pdf": ["fpp.fulltext", "fpp.thumbnail"],
     "error": false
   }
 }

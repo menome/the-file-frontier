@@ -50,15 +50,24 @@ module.exports = function(bot) {
       };
 
       var downstream_actions = bot.config.get('downstream_actions');
-      var newRoutingKey = downstream_actions[res.mime];
+      var newRoute = downstream_actions[res.mime];
 
-      if(newRoutingKey === false || newRoutingKey === undefined) {
+      if(newRoute === false || newRoute === undefined) {
         return bot.logger.info("No next routing key.");
       }
 
-      bot.logger.info("Next routing key is '%s'", newRoutingKey)
-
-      return outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: newRoutingKey});
+      if(typeof newRoute === "string") {
+        bot.logger.info("Next routing key is '%s'", newRoute)
+        return outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: newRoute});
+      }
+      else if(Array.isArray(newRoute)) {
+        bot.logger.info("Next routing keys are '%s'", newRoute.join(', '))
+        newRoute.forEach((rkey) => {
+          return outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: rkey});
+        })
+      }
+      else
+        bot.logger.error("Could not understand next routing key: '%s'", newRoute.toString())
     }).catch((err) => {
       bot.logger.error(err.toString(), err.stack);
     });
