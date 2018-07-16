@@ -102,7 +102,7 @@ module.exports = function(bot) {
       }
 
       return getChecksum(tmpPath).then((sum) => {
-        fileObj.SHA256 = sum;
+        fileObj.params.SHA256 = sum;
         var query = queryBuilder.addFile(fileObj, workingUuid);
         return bot.neo4j.query(query.compile(), query.params()).then((result) => {
           var uuid = result.records[0].get("uuid");
