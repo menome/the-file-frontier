@@ -26,7 +26,7 @@
     "unfluff": "latest",
     "convict": "latest",
     "truncate-utf8-bytes": "^1.0.2",
-    "@menome/botframework": "^2.1.13"
+    "@menome/botframework": "^2.1.14"
   },
   "devDependencies": {
     "mocha": "^2.5.3",
