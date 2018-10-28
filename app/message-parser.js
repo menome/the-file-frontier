@@ -105,6 +105,8 @@ module.exports = function(bot) {
         fileObj.params.SHA256 = sum;
         var query = queryBuilder.addFile(fileObj, workingUuid);
         return bot.neo4j.query(query.compile(), query.params()).then((result) => {
+          bot.logger.info("Result", JSON.stringify(result));
+          bot.logger.info("Result", JSON.stringify(result.records[0].get("mime")));
           var uuid = result.records[0].get("uuid");
           var mime = result.records[0].get("mime");
           helpers.deleteFile(tmpPath);
