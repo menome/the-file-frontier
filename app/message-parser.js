@@ -48,9 +48,8 @@ module.exports = function(bot) {
         "Uuid": res.uuid, // The actual UUID.
         "Mime": res.mime // File's MIME type.
       };
-
-      var downstream_actions = bot.config.get('downstream_actions');
-      var newRoute = downstream_actions[res.mime];
+      
+      var newRoute = helpers.getNextRoutingKey(res.mime, bot);
 
       if(newRoute === false || newRoute === undefined) {
         return bot.logger.info("No next routing key.");
@@ -105,8 +104,8 @@ module.exports = function(bot) {
         fileObj.params.SHA256 = sum;
         var query = queryBuilder.addFile(fileObj, workingUuid);
         return bot.neo4j.query(query.compile(), query.params()).then((result) => {
-          bot.logger.info("Result", JSON.stringify(result));
-          bot.logger.info("Result", JSON.stringify(result.records[0].get("mime")));
+          // bot.logger.info("Result", JSON.stringify(result));
+          // bot.logger.info("Result", JSON.stringify(result.records[0].get("mime")));
           var uuid = result.records[0].get("uuid");
           var mime = result.records[0].get("mime");
           helpers.deleteFile(tmpPath);
