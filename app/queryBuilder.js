@@ -12,7 +12,7 @@ module.exports.addFile = function(file, newUuid) {
 
   query.merge("(f:File:Card {LibraryKey: $key, LibraryPath: $path})",{key: file.Library, path: file.Path});
   query.with("f, f.Uuid as olduuid, exists(f.Uuid) as ex");
-  query.set("f += $params, f.Uuid = case ex when true then olduuid else $newUuid end", {params: file.params, newUuid: newUuid});
+  query.set("f += $params, f.Uuid = case ex when true then olduuid else $newUuid end, f.PendingUpload = false", {params: file.params, newUuid: newUuid});
   query.return("f.Uuid as uuid, f.MimeType as mime");
   return query;
 }
