@@ -1,6 +1,6 @@
 # note that order matters in terms of docker build layers. Least changed near start to most changed...
 # This image will be based on the official nodejs docker image
-FROM node:8.4.0
+FROM node:10.15.0
 
 EXPOSE 80
 ENV PORT 80
@@ -11,6 +11,9 @@ WORKDIR /srv/app
 
 # Add build file
 COPY ./package.json package.json
+
+# Newer compiled magic file for properly detecting ppt and whatnot.
+COPY ./magic.mgc /root/.magic.mgc
 
 # Install dependencies and generate production dist
 ARG NPM_TOKEN
