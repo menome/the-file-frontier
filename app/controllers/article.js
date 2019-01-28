@@ -7,6 +7,7 @@ const extractor = require('unfluff');
 const request = require('request');
 const queryBuilder = require("../queryBuilder")
 const helpers = require('@menome/botframework/helpers');
+const RabbitClient = require('@menome/botframework/rabbitmq');
 
 module.exports.swaggerDef = {
   "/article": {
@@ -53,65 +54,61 @@ module.exports.post = function(req,res) {
         message: "Added Article"
       })
     )
-  })
-
-  // if(!url) return res.status(400).send("Specify a URL.");
-  // return req.registry.get(library, req, res);
+  });
 }
 
 function addArticle(bot, url) {
-  return new Promise(function (resolve) {
-    bot.logger.info("Articler has started.");
-    var articleInfo = {
-      "Name": "string",
-      "Key": url.trim(),
-      "NodeType": "string",
-      "Properties": {
-        "Description": "string",
-        "ImageURL": "string",
-        "FullText": "string",
-        "Author": "string",
-        "DatePublished": "string",
-        "Publisher": "string",
-      },
-      "Connections": []
-    };
+  bot.logger.info("Articler has started.");
+  var articleInfo = {
+    "Name": "string",
+    "Key": url.trim(),
+    "NodeType": "string",
+    "Properties": {
+      "Description": "string",
+      "ImageURL": "string",
+      "FullText": "string",
+      "Author": "string",
+      "DatePublished": "string",
+      "Publisher": "string",
+    },
+    "Connections": []
+  };
 
-    var actions = [];
-    actions.push(extractMetadata(bot, url, articleInfo));
-    actions.push(extractFullText(bot, url, articleInfo));
+  var actions = [];
+  actions.push(extractMetadata(bot, url, articleInfo));
+  actions.push(extractFullText(bot, url, articleInfo));
 
-    // Wait for all actions to finish.
-    Promise.all(actions)
-      .then(function () {
-        //bot.logger.info("Finished Extracting text\n" + JSON.stringify(articleInfo));
-        //Now we need to add it to the neo4j graph
-        //build the query
-        var queryObj = queryBuilder.addArticleQuery(articleInfo, uuidv4());
+  // Wait for all actions to finish.
+  return Promise.all(actions)
+    .then(function () {
+      //bot.logger.info("Finished Extracting text\n" + JSON.stringify(articleInfo));
+      //Now we need to add it to the neo4j graph
+      //build the query
+      var newUuid = uuidv4();
+      var queryObj = queryBuilder.addArticleQuery(articleInfo, newUuid);
 
-        bot.neo4j.query(queryObj.compile(), queryObj.params())
-          .then(function (result) {
-            bot.logger.info(result)
-            // var request = {
-            //   EventType: "ModelArticle",
-            //   Key: articleInfo.Key
-            // }
-            // bot.logger.info("Added Article info");
+      bot.neo4j.query(queryObj.compile(), queryObj.params())
+        .then(function () {
+          var outMsg = {
+            "Timestamp": new Date().toISOString(),
+            "Uuid": newUuid,
+            "Library": "",
+            "Path": "",
+            "Mime": "text/plain" // File's MIME type.
+          };
 
-            // TODO: now we send over to the topic modeler
-            // rabbit_outgoing.publishMessage(request)
-            resolve();
-          })
-          .catch(function (error) {
-            bot.logger.error("Could not add article info %s", error.message);
-            resolve(error);
-          })
-      })
-      .catch(function (error) {
-        bot.logger.error("Operation failed: %s", error.message);
-        resolve(error);
-      });
-  });
+          // TODO: DO NOT HARDCODE THE OUTGOING ROUTING KEY.
+          return bot.outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: "fpp.topicmodels"});
+        })
+        .catch(function (error) {
+          bot.logger.error("Could not add article info %s", error.message);
+          return error;
+        })
+    })
+    .catch(function (error) {
+      bot.logger.error("Operation failed: %s", error.message);
+      return error;
+    });
 }
 
 function extractFullText(bot, url, articleInfo) {

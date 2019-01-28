@@ -5,13 +5,10 @@ const fs = require('fs');
 const mime = require('mime-types');
 const crypto = require('crypto');
 const exec = require('child_process').execFileSync;
-const RabbitClient = require('@menome/botframework/rabbitmq');
 const botSchema = require("@menome/botframework/helpers/schema");
 const helpers = require('./helpers');
 
 module.exports = function(bot) {
-  var outQueue = new RabbitClient(bot.config.get('rabbit_outgoing'));
-  outQueue.connect();
 
   // First ingestion point.
   this.handleMessage = function(msg) {
@@ -57,12 +54,12 @@ module.exports = function(bot) {
 
       if(typeof newRoute === "string") {
         bot.logger.info("Next routing key is '%s'", newRoute)
-        return outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: newRoute});
+        return bot.outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: newRoute});
       }
       else if(Array.isArray(newRoute)) {
         bot.logger.info("Next routing keys are '%s'", newRoute.join(', '))
         newRoute.forEach((rkey) => {
-          return outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: rkey});
+          return bot.outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: rkey});
         })
       }
       else

@@ -10,6 +10,7 @@ const Bot = require('@menome/botframework');
 const config = require("../config/config.json");
 const configSchema = require("./config-schema");
 const messageParser = require("./message-parser");
+const RabbitClient = require('@menome/botframework/rabbitmq');
 
 // Start the actual bot here.
 var bot = new Bot({
@@ -20,6 +21,10 @@ var bot = new Bot({
   },
   configSchema
 });
+
+// Hack this outqueue in here so it can be reused.
+bot.outQueue = new RabbitClient(bot.config.get('rabbit_outgoing'));
+bot.outQueue.connect();
 
 // Listen on the Rabbit bus.
 var mp = new messageParser(bot);
