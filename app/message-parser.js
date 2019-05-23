@@ -97,6 +97,16 @@ module.exports = function(bot) {
         }
       }
 
+      // If it's a PDF file, check/fix it.
+      if(mimeFromData === "application/pdf") {
+        if(isPDFCorrupt(tmpPath)) {
+          bot.logger.info("PDF Corrupt. Attempting to fix.")
+          let fixedPdfPath = fixPDF(tmpPath)
+          var fileName = msg.Path.substring(msg.Path.lastIndexOf('/')+1)
+          return bot.librarian.upload(msg.Library, msg.path, fs.createReadStream(fixedPdfPath), msg.mimeFromData, fileName)
+        }
+      }
+
       return getChecksum(tmpPath).then((sum) => {
         fileObj.params.SHA256 = sum;
         var query = queryBuilder.addFile(fileObj, workingUuid);
@@ -146,5 +156,25 @@ module.exports = function(bot) {
       bot.logger.error(err)
       return null;
     }
+  }
+
+  function isPDFCorrupt(path) {
+    var args = ['-sDevice=pdfwrite', '-dPDFSETTINGS=/prepress', '-o', '/dev/null', path];
+
+    try {
+      var stdout = exec('gs', args);
+      // stdout = stdout.toString();
+      // return stdout.substring(stdout.lastIndexOf(' ')).trim();
+      return !stdout;
+    }
+    catch(err) {
+      bot.logger.error(err)
+      return true;
+    }
+  }
+
+  // Attempts to fix the PDF. Returns the path to the fixed PDF.
+  function fixPDF(path) {
+    return path
   }
 }
