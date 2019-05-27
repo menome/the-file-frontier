@@ -5,8 +5,8 @@ FROM node:10.15.0
 EXPOSE 80
 ENV PORT 80
 
-# Ghostscript is necessary to determine if PDF files are ok.
-RUN apt-get update && apt-get install -y ghostscript
+# Necessary to determine if PDF files are ok.
+RUN apt-get update && apt-get install -y ghostscript qpdf
 
 # Commands will run in this directory
 RUN mkdir /srv/app

@@ -4,12 +4,11 @@ const queryBuilder = require('./queryBuilder');
 const fs = require('fs');
 const mime = require('mime-types');
 const crypto = require('crypto');
-const exec = require('child_process').execFileSync;
+const child_process = require('child_process');
 const botSchema = require("@menome/botframework/helpers/schema");
 const helpers = require('./helpers');
 
 module.exports = function(bot) {
-
   // First ingestion point.
   this.handleMessage = function(msg) {
     var handlerFunc = () => {return Promise.reject("Could not find a processor for harvester message format: " + JSON.stringify(msg))};
@@ -36,6 +35,8 @@ module.exports = function(bot) {
 
     return handlerFunc(msg).then((res) => {
       if(res.action === "deleted") return bot.logger.info("Deleted file from graph.");
+      if(res.action === "pdffix") return bot.logger.info("Cleaned up and re-uploaded PDF file.");
+
       // Make the message and decide where it should go next.
       bot.logger.info("Processed file:", msg.Path)
       var outMsg = {
@@ -82,7 +83,7 @@ module.exports = function(bot) {
 
     // Get the message.
     // var libr = new librarian(bot);
-    return bot.librarian.download(msg.Library, msg.Path, "/tmp/"+workingUuid).then((tmpPath) => {
+    return bot.librarian.download(msg.Library, msg.Path, "/tmp/"+workingUuid).then(async (tmpPath) => {
       var mimeFromName = mime.lookup(msg.Path);
       var mimeFromData = getFileMimetype(tmpPath);
 
@@ -99,11 +100,29 @@ module.exports = function(bot) {
 
       // If it's a PDF file, check/fix it.
       if(mimeFromData === "application/pdf") {
-        if(isPDFCorrupt(tmpPath)) {
+        let corrupt = await isPDFCorrupt(tmpPath)
+
+        if(corrupt) {
           bot.logger.info("PDF Corrupt. Attempting to fix.")
-          let fixedPdfPath = fixPDF(tmpPath)
-          var fileName = msg.Path.substring(msg.Path.lastIndexOf('/')+1)
-          return bot.librarian.upload(msg.Library, msg.path, fs.createReadStream(fixedPdfPath), msg.mimeFromData, fileName)
+          let fixedPdfPath =  await fixPDF(tmpPath)
+          
+          // Check if it actually fixed.
+          let newCorrupt = await isPDFCorrupt(fixedPdfPath)
+          if (!newCorrupt) {
+            let fileName = msg.Path.substring(msg.Path.lastIndexOf('/')+1)
+            let rs = fs.createReadStream(fixedPdfPath)
+
+            return bot.librarian.upload(msg.Library, msg.Path, rs, msg.mimeFromData, fileName).then(() => {
+              helpers.deleteFile(fixedPdfPath);
+              return {action: "pdffix"};
+            }).catch((err) => {
+              helpers.deleteFile(fixedPdfPath);
+              bot.logger.error(err)
+              throw err
+            })
+          } else {
+            bot.logger.info("Could not fix file. Refraining from reupload")
+          }
         }
       }
 
@@ -148,7 +167,7 @@ module.exports = function(bot) {
     args.push(tmpPath)
 
     try {
-      var stdout = exec('file', args);
+      var stdout = child_process.execFileSync('file', args);
       stdout = stdout.toString();
       return stdout.substring(stdout.lastIndexOf(' ')).trim();
     }
@@ -158,23 +177,58 @@ module.exports = function(bot) {
     }
   }
 
+  // Resolves true if corrupt. False if not corrupt.
   function isPDFCorrupt(path) {
-    var args = ['-sDevice=pdfwrite', '-dPDFSETTINGS=/prepress', '-o', '/dev/null', path];
+    return new Promise((resolve) => {
+      bot.logger.info("Checking PDF")
+      let errText = "";
+      let proc = child_process.execFile('qpdf', ['--check', path]);
 
-    try {
-      var stdout = exec('gs', args);
-      // stdout = stdout.toString();
-      // return stdout.substring(stdout.lastIndexOf(' ')).trim();
-      return !stdout;
-    }
-    catch(err) {
-      bot.logger.error(err)
-      return true;
-    }
+      proc.stderr.on("data", (chunk) => {
+        errText += chunk.toString()
+      })
+
+      proc.on("exit", (code) => {
+        if(code === 0) {
+          return resolve(false)
+        }
+        else if(code === 3) {
+          // Code 3 is just warnings.
+          // But there is a bug where certain warnings are causing an error code
+          // https://github.com/qpdf/qpdf/issues/50
+          return resolve(false)
+        }
+
+        bot.logger.info(errText)
+        return resolve(true)
+      })
+    })
   }
 
   // Attempts to fix the PDF. Returns the path to the fixed PDF.
+  // This can throw exceptions
   function fixPDF(path) {
-    return path
+    return new Promise((resolve, reject) => {
+      let outPath = path + "-fixed"
+      let errText = "";
+      let proc = child_process.execFile('qpdf', [path, outPath]);
+
+      proc.stderr.on("data", (chunk) => {
+        errText += chunk.toString()
+      })
+
+      proc.on("exit", (code) => {
+        if(code === 0) {
+          return resolve(outPath)
+        }
+        else if(code === 3) { // Code 3 is "Operation Succeeded with Warnings"
+          return resolve(outPath)
+        }
+
+        // On error, delete our intermediate file.
+        helpers.deleteFile(outPath);
+        return reject(new Error(errText))
+      })
+    })
   }
 }
