@@ -98,17 +98,26 @@ module.exports = function(bot) {
         }
       }
 
+      // Check if we've already tried to fix the file.
+      let attemptedFix = false;
+      var checkFileQuery = queryBuilder.getFile(msg.Library, msg.Path);
+      var fileResult = await bot.neo4j.query(checkFileQuery.compile(), checkFileQuery.params())
+      if(fileResult.records.length > 0 && fileResult.records[0].get("attemptedfix")) {
+        attemptedFix = true;
+      }
+
       // If it's a PDF file, check/fix it.
-      if(mimeFromData === "application/pdf") {
+      if(!attemptedFix && mimeFromData === "application/pdf") {
         let corrupt = await isPDFCorrupt(tmpPath)
 
         if(corrupt) {
+          attemptedFix = true;
           bot.logger.info("PDF Corrupt. Attempting to fix.")
-          let fixedPdfPath =  await fixPDF(tmpPath)
+          let fixedPdfPath = await fixPDF(tmpPath)
           
           // Check if it actually fixed.
-          let newCorrupt = await isPDFCorrupt(fixedPdfPath)
-          if (!newCorrupt) {
+          let fixFailed = await isPDFCorrupt(fixedPdfPath)
+          if (!fixFailed) {
             let fileName = msg.Path.substring(msg.Path.lastIndexOf('/')+1)
             let rs = fs.createReadStream(fixedPdfPath)
 
@@ -128,7 +137,8 @@ module.exports = function(bot) {
 
       return getChecksum(tmpPath).then((sum) => {
         fileObj.params.SHA256 = sum;
-        var query = queryBuilder.addFile(fileObj, workingUuid);
+
+        var query = queryBuilder.addFile(fileObj, workingUuid, attemptedFix);
         return bot.neo4j.query(query.compile(), query.params()).then((result) => {
           // bot.logger.info("Result", JSON.stringify(result));
           // bot.logger.info("Result", JSON.stringify(result.records[0].get("mime")));

@@ -7,13 +7,24 @@ module.exports = {};
  * Returns CQL query that will build the object.
  * Doesn't link it to anything. Just creates the basic node with all its properties.
  */
-module.exports.addFile = function(file, newUuid) {
+module.exports.addFile = function(file, newUuid, attemptedFix) {
   var query = new Query();
 
   query.merge("(f:File:Card {LibraryKey: $key, LibraryPath: $path})",{key: file.Library, path: file.Path});
   query.with("f, f.Uuid as olduuid, exists(f.Uuid) as ex");
-  query.set("f += $params, f.Uuid = case ex when true then olduuid else $newUuid end, f.PendingUpload = false", {params: file.params, newUuid: newUuid});
+  query.set("f += $params, f.Uuid = case ex when true then olduuid else $newUuid end, f.PendingUpload = false, f.AttemptedFix = true", {params: file.params, newUuid: newUuid, attemptedFix});
   query.return("f.Uuid as uuid, f.MimeType as mime");
+  return query;
+}
+
+/** 
+ * Grabs a file and some properties from the graph.
+ * Used to make sure 
+ */
+module.exports.getFile = function(key, path) {
+  var query = new Query();
+  query.match("(f:File:Card {LibraryKey: $key, LibraryPath: $path})",{key, path});
+  query.return("f as file, f.AttemptedFix as attemptedfix");
   return query;
 }
 
