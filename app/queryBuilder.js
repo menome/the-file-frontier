@@ -36,7 +36,8 @@ module.exports.deleteFile = function(libraryKey, libraryPath) {
   var query = new Query();
   query.match("(f:File:Card)");
   query.where("f.LibraryKey = $lkey AND f.LibraryPath = $lpath", {lkey: libraryKey, lpath: libraryPath})
-  query.add("DETACH DELETE f");
+  query.add("OPTIONAL MATCH (f)-[:HAS_PAGE]->(p:Page:Card)")
+  query.add("DETACH DELETE f, p");
   return query;
 }
 
