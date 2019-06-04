@@ -37,7 +37,9 @@ module.exports.deleteFile = function(libraryKey, libraryPath) {
   query.match("(f:File:Card)");
   query.where("f.LibraryKey = $lkey AND f.LibraryPath = $lpath", {lkey: libraryKey, lpath: libraryPath})
   query.add("OPTIONAL MATCH (f)-[:HAS_PAGE]->(p:Page:Card)")
-  query.add("DETACH DELETE f, p");
+  query.with("f, p, f.Thumbnail as fileThumb, f.ThumbnailLibrary as fileThumbLib, p.Thumbnail as pageThumb, p.ThumbnailLibrary as pageThumbLib")
+  query.add("DETACH DELETE f, p")
+  query.return("fileThumb, fileThumbLib, pageThumb, pageThumbLib") // For deletion/cleanup.
   return query;
 }
 

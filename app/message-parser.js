@@ -78,7 +78,24 @@ module.exports = function(bot) {
     // Handle deletes separately.
     if(msg.EventType === "DELETE") {
       var query = queryBuilder.deleteFile(msg.Library, msg.Path);
-      return bot.neo4j.query(query.compile(), query.params()).then(() => { return {action: "deleted"}; })
+      return bot.neo4j.query(query.compile(), query.params()).then(async (result) => {
+        bot.logger.info("Attempting to remove thumbnails.");
+        let deletedFileThumb = false;
+        for(var i=0; i < result.records.length; i++) {
+          let record = result.records[i];
+          if(record.get('fileThumbLib') && !deletedFileThumb) {
+            await bot.librarian.delete(record.get('fileThumbLib'), record.get('fileThumb'))
+            deletedFileThumb = true;
+          }
+
+          // Don't try to delete if it's null. Because this uses an OPTIONAL MATCH
+          if(record.get('pageThumb')) {
+            await bot.librarian.delete(record.get('pageThumbLib'), record.get('pageThumb'))
+          }
+        }
+
+        return result.records;
+      }).then(() => { return {action: "deleted"}; })
     }
 
     // Get the message.

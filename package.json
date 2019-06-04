@@ -1,7 +1,7 @@
 {
   "name": "the-file-frontier",
   "private": true,
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "File processing entry point",
   "repository": "https://github.com/menome",
   "license": "Commercial",
@@ -20,7 +20,7 @@
     "metascraper": "1.0.6",
     "unfluff": "^3.2.0",
     "convict": "^4.4.1",
-    "@menome/botframework": "^2.2.3"
+    "@menome/botframework": "^2.2.4"
   },
   "devDependencies": {
     "mocha": "^2.5.3",
