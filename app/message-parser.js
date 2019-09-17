@@ -89,6 +89,9 @@ module.exports = function(bot) {
           }
 
           // Don't try to delete if it's null. Because this uses an OPTIONAL MATCH
+          if(record.get('fileImage')) {
+            await bot.librarian.delete(record.get('fileImageLib'), record.get('fileImage'))
+          }
           if(record.get('pageThumb')) {
             await bot.librarian.delete(record.get('pageThumbLib'), record.get('pageThumb'))
           }
