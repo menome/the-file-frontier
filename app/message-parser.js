@@ -34,11 +34,11 @@ module.exports = function(bot) {
     }
 
     return handlerFunc(msg).then((res) => {
-      if(res.action === "deleted") return bot.logger.info("Deleted file from graph.");
-      if(res.action === "pdffix") return bot.logger.info("Cleaned up and re-uploaded PDF file.");
+      if(res.action === "deleted") return bot.logger.info("Deleted file from graph.",{action:res.action,path:msg.Path});
+      if(res.action === "pdffix") return bot.logger.info("Cleaned up and re-uploaded PDF file.",{action:res.action,path:msg.Path});
 
       // Make the message and decide where it should go next.
-      bot.logger.info("Processed file:", msg.Path)
+      bot.logger.info("Processed file", {action:res.action,path:msg.Path})
       var outMsg = {
         "Library": msg.Library,
         "Path": msg.Path,
@@ -50,23 +50,23 @@ module.exports = function(bot) {
       var newRoute = helpers.getNextRoutingKey(res.mime, bot);
 
       if(newRoute === false || newRoute === undefined) {
-        return bot.logger.info("No next routing key.");
+        return bot.logger.info("No next routing key.",{action:res.action,path:msg.Path});
       }
 
       if(typeof newRoute === "string") {
-        bot.logger.info("Next routing key is '%s'", newRoute)
+        bot.logger.info("Next routing key",{action:res.action,path:msg.Path,routingKey:newRoute})
         return bot.outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: newRoute});
       }
       else if(Array.isArray(newRoute)) {
-        bot.logger.info("Next routing keys are '%s'", newRoute.join(', '))
+        bot.logger.info("Next routing keys",{action:res.action,path:msg.Path,routingKey:newRoute.join(', ')})
         newRoute.forEach((rkey) => {
           return bot.outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: rkey});
         })
       }
       else
-        bot.logger.error("Could not understand next routing key: '%s'", newRoute.toString())
+        bot.logger.error("Could not understand next routing key",{action:res.action,path:msg.Path,routingKey:newRoute.toString()})
     }).catch((err) => {
-      bot.logger.error(err.toString(), err.stack);
+      bot.logger.error("error handling message",{msg:msg,error:err.toString(), stackTrace:err.stack});
     });
   }
 

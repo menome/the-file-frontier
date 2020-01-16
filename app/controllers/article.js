@@ -40,7 +40,7 @@ module.exports.swaggerDef = {
 module.exports.post = function(req,res) {
   var url = req.swagger.params.url.value;
 
-  req.bot.logger.info("Adding URL:" + "<" + url + ">");
+  req.bot.logger.info("Adding URL:" + "<" + url + ">",{method:"post",params:req.swagger.params});
   //article info json blob
   addArticle(req.bot, url).then((err) => {
     if(err) return res.status(500).send(helpers.responseWrapper({
@@ -58,7 +58,7 @@ module.exports.post = function(req,res) {
 }
 
 function addArticle(bot, url) {
-  bot.logger.info("Articler has started.");
+  bot.logger.info("Articler has started.",{url:url});
   var articleInfo = {
     "Name": "string",
     "Key": url.trim(),
@@ -101,18 +101,18 @@ function addArticle(bot, url) {
           return bot.outQueue.publishMessage(outMsg, "fileProcessingMessage", {routingKey: "fpp.topicmodels"});
         })
         .catch(function (error) {
-          bot.logger.error("Could not add article info %s", error.message);
+          bot.logger.error("Could not add article info", {error:error.message});
           return error;
         })
     })
     .catch(function (error) {
-      bot.logger.error("Operation failed: %s", error.message);
+      bot.logger.error("Operation failed", {error:error.message});
       return error;
     });
 }
 
 function extractFullText(bot, url, articleInfo) {
-  bot.logger.info("Extracting fullText article");
+  bot.logger.info("Extracting fullText article",{url:url,articleInfo:articleInfo});
   return new Promise(function (resolve) {
     request(url, function (error, response, body) {
       if (error) {
@@ -129,9 +129,9 @@ function extractFullText(bot, url, articleInfo) {
 function extractMetadata(bot, url, articleInfo) {
   //use the metascraper to scrape the data
   return new Promise(function (resolve) {
-    bot.logger.info("Starting Scraper on URL: <" + url + ">");
+    bot.logger.info("Starting Scraper on URL: <" + url + ">",{url:url,articleInfo:articleInfo});
     metascraper.scrapeUrl(url).then((metadata) => {
-      bot.logger.info("Scraper has returned!");
+      bot.logger.info("Scraper has returned!",{url:url,articleInfo:articleInfo});
       articleInfo.Name = metadata.title;
       articleInfo.NodeType = 'Article';
       articleInfo.Properties.Description = metadata.description;
