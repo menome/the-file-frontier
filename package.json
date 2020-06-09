@@ -1,14 +1,14 @@
 {
   "name": "the-file-frontier",
   "private": true,
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "File processing entry point",
   "repository": "https://github.com/menome",
   "license": "Commercial",
   "dependencies": {
-    "forever": "latest",
+    "forever": "^3.0.0",
     "mime-types": "^2.1.15",
-    "express": "latest",
+    "express": "^4.17.1",
     "minio": "^3.1.3",
     "request": "^2.88.0",
     "decypher": "^0.11.0",
@@ -20,14 +20,14 @@
     "metascraper": "1.0.6",
     "unfluff": "^3.2.0",
     "convict": "^4.4.1",
-    "@menome/botframework": "^3.1.1"
+    "@menome/botframework": "^3.1.5"
   },
   "devDependencies": {
     "mocha": "^2.5.3",
     "chai": "^3.5.0",
     "supertest": "^3.0.0",
     "mock-require": "^2.0.1",
-    "nodemon": "latest"
+    "nodemon": "^2.0.4"
   },
   "scripts": {
     "start": "[ \"$NODE_ENV\" = \"production\" ] && npm run prod || npm run dev",
