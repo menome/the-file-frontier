@@ -63,7 +63,7 @@ module.exports.addArticleQuery = function(articleObj, newUuid) {
     FullText: articleObj.Properties.FullText,
     Uuid: newUuid
   };
-  query.merge("(a:Card:Article {Uri: {uri}})",{uri: params.Uri});
-  query.set("a += {params}", {params: params});
+  query.merge("(a:Card:Article {Uri: $uri})",{uri: params.Uri});
+  query.set("a += $params", {params: params});
   return query;
 }
