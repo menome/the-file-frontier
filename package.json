@@ -20,7 +20,7 @@
     "metascraper": "1.0.6",
     "unfluff": "^3.2.0",
     "convict": "^4.4.1",
-    "@menome/botframework": "^3.1.5"
+    "@menome/botframework": "^3.2.0"
   },
   "devDependencies": {
     "mocha": "^2.5.3",
