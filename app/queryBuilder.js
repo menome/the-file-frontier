@@ -59,6 +59,7 @@ module.exports.addArticleQuery = function(articleObj, newUuid) {
     ImageURL: articleObj.Properties.ImageURL,
     Author: articleObj.Properties.Author,
     DatePublished: articleObj.Properties.DatePublished,
+    TheLinkAddedDate: new Date().toISOString(),
     Publisher: articleObj.Properties.Publisher,
     FullText: articleObj.Properties.FullText,
     Uuid: newUuid
